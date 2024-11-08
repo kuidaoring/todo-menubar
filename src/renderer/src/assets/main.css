@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#appTitleBar {
+  -webkit-app-region: drag;
+}
+
+.detailTitleTextArea {
+  field-sizing: content;
+}
+.stepTitleTextArea {
+  field-sizing: content;
+}

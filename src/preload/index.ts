@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import {
+  DAY_OF_WEEK_MAP,
+  DAY_OF_WEEKS,
+  Repeat,
+  REPEAT_DAILY,
+  REPEAT_NONE,
+  REPEAT_WEEKDAYS
+} from '../main/task'
 
 // Custom APIs for renderer
 const api = {
@@ -24,6 +32,9 @@ const api = {
   updateDueDate: async (id: number, dueDate: Date | null) => {
     return await ipcRenderer.invoke('updateDueDate', id, dueDate)
   },
+  updateRepeat: async (id: number, repeat: Repeat | null) => {
+    return await ipcRenderer.invoke('updateRepeat', id, repeat)
+  },
   updateMemo: async (id: number, memo: string | null) => {
     return await ipcRenderer.invoke('updateMemo', id, memo)
   },
@@ -44,6 +55,16 @@ const api = {
   }
 }
 
+const constants = {
+  repeat: {
+    DAY_OF_WEEK_MAP: DAY_OF_WEEK_MAP,
+    DAY_OF_WEEKS: DAY_OF_WEEKS,
+    REPEAT_NONE: REPEAT_NONE,
+    REPEAT_DAILY: REPEAT_DAILY,
+    REPEAT_WEEKDAYS: REPEAT_WEEKDAYS
+  }
+}
+
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
@@ -51,6 +72,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('constants', constants)
   } catch (error) {
     console.error(error)
   }

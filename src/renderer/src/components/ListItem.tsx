@@ -1,4 +1,5 @@
 import { formatDate } from '@renderer/formatDate'
+import { formatRepeat, hasRepeat } from '@renderer/repeat'
 import { Task } from '@renderer/types'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { isBefore } from 'date-fns/isBefore'
@@ -28,8 +29,8 @@ function ListItem({ task, onChange, diableLink, children }: Props) {
       </span>
     )
   }
-  if (true) {
-    iconElements.push(<span key={`${task.id}-repeat`}>🔁</span>)
+  if (hasRepeat(task.repeat)) {
+    iconElements.push(<span key={`${task.id}-repeat`}>🔁 {formatRepeat(task.repeat)}</span>)
   }
   if (task.memo && task.memo.trim().length > 0) {
     iconElements.push(<span key={`${task.id}-memo`}>📝</span>)

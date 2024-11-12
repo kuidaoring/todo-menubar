@@ -10,12 +10,79 @@ export type Task = {
   memo?: string | null
   steps?: Step[]
   createdAt: Date
+  repeat?: Repeat
 }
 
 export type Step = {
   id: string
   title: string
   completed: boolean
+}
+
+export type Repeat = RepeatWeekly | RepeatMonthly | RepeatNone
+
+type RepeatWeekly = {
+  type: 'weekly'
+  dayOfWeeks: DayOfWeek[]
+}
+
+export const SUNDAY = { number: 0, label: '日' } as const
+export const MONDAY = { number: 1, label: '月' } as const
+export const TUESDAY = { number: 2, label: '火' } as const
+export const WEDNESDAY = { number: 3, label: '水' } as const
+export const THURSDAY = { number: 4, label: '木' } as const
+export const FRIDAY = { number: 5, label: '金' } as const
+export const SATURDAY = { number: 6, label: '土' } as const
+
+type DayOfWeek =
+  | typeof SUNDAY
+  | typeof MONDAY
+  | typeof TUESDAY
+  | typeof WEDNESDAY
+  | typeof THURSDAY
+  | typeof FRIDAY
+  | typeof SATURDAY
+
+export const DAY_OF_WEEK_MAP = {
+  SUNDAY,
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY
+} as const
+export const DAY_OF_WEEKS = [
+  SUNDAY,
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY
+] as const
+
+type RepeatMonthly = {
+  type: 'monthly'
+  dayOfMonth: number
+}
+
+type RepeatNone = {
+  type: 'none'
+}
+
+export const REPEAT_NONE: RepeatNone = {
+  type: 'none'
+}
+
+export const REPEAT_DAILY: RepeatWeekly = {
+  type: 'weekly',
+  dayOfWeeks: [SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY]
+}
+
+export const REPEAT_WEEKDAYS: RepeatWeekly = {
+  type: 'weekly',
+  dayOfWeeks: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
 }
 
 const tasks: Task[] = [
@@ -37,28 +104,63 @@ const tasks: Task[] = [
     completed: true,
     isToday: true,
     memo: 'memoB',
-    createdAt: new Date()
+    createdAt: new Date(),
+    repeat: {
+      type: 'none'
+    }
   },
   {
     id: crypt.randomUUID(),
     title: 'task 3',
     completed: false,
     isToday: true,
-    createdAt: new Date()
+    createdAt: new Date(),
+    repeat: {
+      type: 'weekly',
+      dayOfWeeks: [
+        { number: 0, label: '日' },
+        { number: 1, label: '月' },
+        { number: 2, label: '火' },
+        { number: 3, label: '水' },
+        { number: 4, label: '木' },
+        { number: 5, label: '金' },
+        { number: 6, label: '土' }
+      ]
+    }
   },
   {
     id: crypt.randomUUID(),
     title: 'task 4',
     completed: true,
     isToday: true,
-    createdAt: new Date()
+    createdAt: new Date(),
+    repeat: {
+      type: 'weekly',
+      dayOfWeeks: [
+        { number: 1, label: '月' },
+        { number: 2, label: '火' },
+        { number: 3, label: '水' },
+        { number: 4, label: '木' },
+        { number: 5, label: '金' }
+      ]
+    }
   },
   {
     id: crypt.randomUUID(),
     title: 'task 5',
     completed: false,
     isToday: false,
-    createdAt: new Date()
+    createdAt: new Date(),
+    repeat: {
+      type: 'weekly',
+      dayOfWeeks: [
+        { number: 0, label: '日' },
+        { number: 1, label: '月' },
+        { number: 2, label: '火' },
+        { number: 3, label: '水' },
+        { number: 4, label: '木' }
+      ]
+    }
   },
   {
     id: crypt.randomUUID(),
@@ -66,7 +168,11 @@ const tasks: Task[] = [
     completed: true,
     isToday: false,
     dueDate: startOfYesterday(),
-    createdAt: new Date()
+    createdAt: new Date(),
+    repeat: {
+      type: 'monthly',
+      dayOfMonth: 10
+    }
   },
   {
     id: crypt.randomUUID(),
@@ -154,6 +260,18 @@ export async function updateDueDate(id: string, dueDate: Date | null): Promise<T
     return null
   }
   task.dueDate = dueDate
+  return task
+}
+
+export async function updateRepeat(id: string, repeat: Repeat | null): Promise<Task | null> {
+  const task = tasks.find((task) => task.id === id)
+  if (!task) {
+    return null
+  }
+  if (!repeat) {
+    repeat = { type: 'none' }
+  }
+  task.repeat = repeat
   return task
 }
 

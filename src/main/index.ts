@@ -15,7 +15,9 @@ import {
   addStep,
   deleteTask,
   updateStepTitle,
-  deleteStep
+  deleteStep,
+  Repeat,
+  updateRepeat
 } from './task'
 
 function createWindow(): void {
@@ -90,6 +92,9 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('updateDueDate', async (_, id: string, dueDate: Date | null) => {
     return updateDueDate(id, dueDate)
+  })
+  ipcMain.handle('updateRepeat', async (_, id: string, repeat: Repeat | null) => {
+    return updateRepeat(id, repeat)
   })
   ipcMain.handle('updateMemo', async (_, id: string, memo: string | null) => {
     return updateMemo(id, memo)

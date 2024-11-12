@@ -5,11 +5,17 @@ import { isTomorrow } from 'date-fns/isTomorrow'
 import { isYesterday } from 'date-fns/isYesterday'
 import { ja } from 'date-fns/locale'
 
-export function formatDate(date: Date): string {
+export function formatDate(date?: Date | null): string {
+  if (!date) {
+    return ''
+  }
   return format(date, getFormatString(date), { locale: ja })
 }
 
-export function getFormatString(date: Date): string {
+export function getFormatString(date?: Date | null): string {
+  if (!date) {
+    return ''
+  }
   if (isToday(date)) {
     return '今日'
   }

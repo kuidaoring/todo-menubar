@@ -49,8 +49,6 @@ function Dialog({ isOpen, onClose }: DialogProps) {
     }
   })
 
-  console.log(query.data?.length)
-
   return (
     <dialog
       ref={dialogRef}

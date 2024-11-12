@@ -115,18 +115,7 @@ const tasks: Task[] = [
     completed: false,
     isToday: true,
     createdAt: new Date(),
-    repeat: {
-      type: 'weekly',
-      dayOfWeeks: [
-        { number: 0, label: '日' },
-        { number: 1, label: '月' },
-        { number: 2, label: '火' },
-        { number: 3, label: '水' },
-        { number: 4, label: '木' },
-        { number: 5, label: '金' },
-        { number: 6, label: '土' }
-      ]
-    }
+    repeat: REPEAT_DAILY
   },
   {
     id: crypt.randomUUID(),
@@ -134,16 +123,7 @@ const tasks: Task[] = [
     completed: true,
     isToday: true,
     createdAt: new Date(),
-    repeat: {
-      type: 'weekly',
-      dayOfWeeks: [
-        { number: 1, label: '月' },
-        { number: 2, label: '火' },
-        { number: 3, label: '水' },
-        { number: 4, label: '木' },
-        { number: 5, label: '金' }
-      ]
-    }
+    repeat: REPEAT_WEEKDAYS
   },
   {
     id: crypt.randomUUID(),
@@ -153,13 +133,7 @@ const tasks: Task[] = [
     createdAt: new Date(),
     repeat: {
       type: 'weekly',
-      dayOfWeeks: [
-        { number: 0, label: '日' },
-        { number: 1, label: '月' },
-        { number: 2, label: '火' },
-        { number: 3, label: '水' },
-        { number: 4, label: '木' }
-      ]
+      dayOfWeeks: [SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
     }
   },
   {
@@ -269,7 +243,7 @@ export async function updateRepeat(id: string, repeat: Repeat | null): Promise<T
     return null
   }
   if (!repeat) {
-    repeat = { type: 'none' }
+    repeat = REPEAT_NONE
   }
   task.repeat = repeat
   return task

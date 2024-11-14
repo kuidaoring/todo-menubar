@@ -1,4 +1,13 @@
-import { startOfToday, startOfTomorrow, startOfYesterday } from 'date-fns'
+import {
+  addMonths,
+  getMonth,
+  lastDayOfMonth,
+  nextDay,
+  setDate,
+  startOfToday,
+  startOfTomorrow,
+  startOfYesterday
+} from 'date-fns'
 import crypt from 'crypto'
 
 export type Task = {
@@ -11,6 +20,7 @@ export type Task = {
   steps?: Step[]
   createdAt: Date
   repeat?: Repeat
+  repeatCreated: boolean
 }
 
 export type Step = {
@@ -85,94 +95,96 @@ export const REPEAT_WEEKDAYS: RepeatWeekly = {
   dayOfWeeks: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
 }
 
-const tasks: Task[] = [
-  {
-    id: crypt.randomUUID(),
-    title: 'task 1',
-    completed: false,
-    isToday: true,
-    memo: 'memoA',
-    steps: [
-      { id: crypt.randomUUID(), title: 'step1', completed: false },
-      { id: crypt.randomUUID(), title: 'step2', completed: true }
-    ],
-    createdAt: new Date('2023-12-31')
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 2',
-    completed: true,
-    isToday: true,
-    memo: 'memoB',
-    createdAt: new Date(),
-    repeat: {
-      type: 'none'
-    }
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 3',
-    completed: false,
-    isToday: true,
-    createdAt: new Date(),
-    repeat: REPEAT_DAILY
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 4',
-    completed: true,
-    isToday: true,
-    createdAt: new Date(),
-    repeat: REPEAT_WEEKDAYS
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 5',
-    completed: false,
-    isToday: false,
-    createdAt: new Date(),
-    repeat: {
-      type: 'weekly',
-      dayOfWeeks: [SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
-    }
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 6',
-    completed: true,
-    isToday: false,
-    dueDate: startOfYesterday(),
-    createdAt: new Date(),
-    repeat: {
-      type: 'monthly',
-      dayOfMonth: 10
-    }
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 7',
-    completed: false,
-    isToday: false,
-    dueDate: startOfTomorrow(),
-    createdAt: new Date()
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 8',
-    completed: true,
-    isToday: false,
-    dueDate: startOfToday(),
-    createdAt: new Date()
-  },
-  {
-    id: crypt.randomUUID(),
-    title: 'task 9',
-    completed: false,
-    isToday: false,
-    dueDate: new Date('2024-01-01'),
-    createdAt: new Date()
+const tasks: Task[] = []
+
+createTask({
+  title: 'task 1',
+  completed: false,
+  isToday: true,
+  memo: 'memoA',
+  steps: [
+    { id: crypt.randomUUID(), title: 'step1', completed: false },
+    { id: crypt.randomUUID(), title: 'step2', completed: true }
+  ],
+  createdAt: new Date('2023-12-31')
+})
+createTask({
+  title: 'task 1',
+  completed: false,
+  isToday: true,
+  memo: 'memoA',
+  steps: [
+    { id: crypt.randomUUID(), title: 'step1', completed: false },
+    { id: crypt.randomUUID(), title: 'step2', completed: true }
+  ],
+  createdAt: new Date('2023-12-31')
+})
+createTask({
+  title: 'task 2',
+  completed: true,
+  isToday: true,
+  memo: 'memoB',
+  createdAt: new Date(),
+  repeat: {
+    type: 'none'
   }
-]
+})
+createTask({
+  title: 'task 3',
+  completed: false,
+  isToday: true,
+  createdAt: new Date(),
+  repeat: REPEAT_DAILY
+})
+createTask({
+  title: 'task 4',
+  completed: true,
+  isToday: true,
+  createdAt: new Date(),
+  repeat: REPEAT_WEEKDAYS
+})
+createTask({
+  title: 'task 5',
+  completed: false,
+  isToday: false,
+  createdAt: new Date(),
+  repeat: {
+    type: 'weekly',
+    dayOfWeeks: [SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
+  }
+})
+createTask({
+  title: 'task 6',
+  completed: true,
+  isToday: false,
+  dueDate: startOfYesterday(),
+  createdAt: new Date(),
+  repeat: {
+    type: 'monthly',
+    dayOfMonth: 10
+  }
+})
+createTask({
+  title: 'task 7',
+  completed: false,
+  isToday: false,
+  dueDate: startOfTomorrow(),
+  createdAt: new Date()
+})
+createTask({
+  title: 'task 8',
+  completed: true,
+  isToday: false,
+  dueDate: startOfToday(),
+  createdAt: new Date()
+})
+createTask({
+  title: 'task 9',
+  completed: false,
+  isToday: false,
+  dueDate: new Date('2024-01-01'),
+  createdAt: new Date()
+})
 
 export async function getTask(id: string): Promise<Task | null> {
   return tasks.find((task) => task.id === id) || null
@@ -192,15 +204,78 @@ export async function getTasks(filter: string): Promise<Task[]> {
 }
 
 export async function addTask(title: string, isToday: boolean): Promise<Task> {
-  const task: Task = {
+  return createTask({ title, isToday })
+}
+
+function createTask(task: {
+  title: string
+  completed?: boolean
+  isToday?: boolean
+  dueDate?: Date | null
+  memo?: string | null
+  steps?: Step[]
+  createdAt?: Date
+  repeat?: Repeat
+}): Task {
+  const newTask = {
     id: crypt.randomUUID(),
-    title,
-    completed: false,
-    isToday,
-    createdAt: new Date()
+    isToday: task.isToday || false,
+    completed: task.completed || false,
+    createdAt: new Date(),
+    repeatCreated: false,
+    ...task
   }
-  tasks.unshift(task)
-  return task
+  tasks.unshift(newTask)
+  return newTask
+}
+
+function addRepeatNextTask(task: Task): Task | null {
+  if (!task.repeat || task.repeat.type === 'none' || task.repeatCreated) {
+    return null
+  }
+
+  const nextDueDate = getWeeklyNextDueDate(task) || getMonthlyNextDueDate(task)
+  const repeat = structuredClone(task.repeat)
+  const steps = task.steps ? structuredClone(task.steps) : []
+  steps.forEach((step) => {
+    step.id = crypt.randomUUID()
+    step.completed = false
+  })
+  const nextTask = createTask({
+    title: task.title,
+    memo: task.memo,
+    repeat,
+    steps,
+    dueDate: nextDueDate
+  })
+  task.repeatCreated = true
+  return nextTask
+}
+
+function getWeeklyNextDueDate(task: Task): Date | null {
+  if (!task.repeat || task.repeat.type !== 'weekly' || task.repeat.dayOfWeeks.length < 1) {
+    return null
+  }
+  const baseDueDate = task.dueDate || new Date()
+  let nextDueDateDay = task.repeat.dayOfWeeks.find(
+    (dayOfWeek) => dayOfWeek.number > baseDueDate.getDay()
+  )
+  if (!nextDueDateDay) {
+    nextDueDateDay = task.repeat.dayOfWeeks[0]
+  }
+  return nextDay(baseDueDate, nextDueDateDay.number)
+}
+
+function getMonthlyNextDueDate(task: Task): Date | null {
+  if (!task.repeat || task.repeat.type !== 'monthly') {
+    return null
+  }
+  const baseDueDate = task.dueDate || new Date()
+  let nextDueDate = setDate(addMonths(baseDueDate, 1), task.repeat.dayOfMonth)
+  if (getMonth(nextDueDate) !== getMonth(addMonths(baseDueDate, 1))) {
+    nextDueDate = lastDayOfMonth(addMonths(baseDueDate, 1))
+  }
+  return nextDueDate
 }
 
 export async function deleteTask(id: string): Promise<void> {
@@ -214,6 +289,9 @@ export async function toggleCompleted(id: string): Promise<Task | null> {
   const task = tasks.find((task) => task.id === id)
   if (!task) {
     return null
+  }
+  if (!task.completed) {
+    addRepeatNextTask(task)
   }
   task.completed = !task.completed
   return task

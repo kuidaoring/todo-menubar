@@ -101,18 +101,6 @@ createTask({
   title: 'task 1',
   completed: false,
   isToday: true,
-  memo: 'memoA',
-  steps: [
-    { id: crypt.randomUUID(), title: 'step1', completed: false },
-    { id: crypt.randomUUID(), title: 'step2', completed: true }
-  ],
-  createdAt: new Date('2023-12-31')
-})
-createTask({
-  title: 'task 1',
-  completed: false,
-  isToday: true,
-  memo: 'memoA',
   steps: [
     { id: crypt.randomUUID(), title: 'step1', completed: false },
     { id: crypt.randomUUID(), title: 'step2', completed: true }
@@ -123,7 +111,6 @@ createTask({
   title: 'task 2',
   completed: true,
   isToday: true,
-  memo: 'memoB',
   createdAt: new Date(),
   repeat: {
     type: 'none'

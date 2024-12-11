@@ -13,16 +13,17 @@ import React, { createRef, forwardRef, useEffect, useRef, useState } from 'react
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { ja } from 'date-fns/locale'
-import { DetailRepeat } from '@renderer/components/DetailRepeat'
+import DetailRepeat from '@renderer/components/DetailRepeat'
+import DetailMemo from '@renderer/components/DetailMemo'
 import { ErrorBoundary } from 'react-error-boundary'
 
 type SearchParams = {
   filter: SearchFilterOptions
 }
 
-function buildGetTaskQueryOptions(taskId: string, filter: SearchFilterOptions) {
+function buildGetTaskQueryOptions(taskId: string) {
   return queryOptions({
-    queryKey: ['tasks', { filter: filter }, { id: taskId }],
+    queryKey: ['tasks', { id: taskId }],
     queryFn: async () => window.api.getTask(taskId)
   })
 }
@@ -34,18 +35,15 @@ export const Route = createFileRoute('/tasks/$taskId')({
     }
   },
   component: Task,
-  loaderDeps: ({ search: { filter } }) => {
-    return { filter }
-  },
-  loader: ({ params, deps: { filter }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData(buildGetTaskQueryOptions(params.taskId, filter))
+  loader: ({ params, context: { queryClient } }) => {
+    return queryClient.ensureQueryData(buildGetTaskQueryOptions(params.taskId))
   }
 })
 
 function Task() {
   const { filter } = Route.useSearch()
   const { taskId } = Route.useParams()
-  const query = useSuspenseQuery(buildGetTaskQueryOptions(taskId, filter))
+  const query = useSuspenseQuery(buildGetTaskQueryOptions(taskId))
   const navigate = useNavigate()
 
   const { queryClient } = Route.useRouteContext()
@@ -54,7 +52,7 @@ function Task() {
     mutationFn: async (id: string) => window.api.deleteTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
       navigate({ to: '/tasks', search: { filter: filter } })
     }
@@ -64,7 +62,7 @@ function Task() {
     mutationFn: window.api.toggleCompleted,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -95,7 +93,7 @@ function Task() {
       window.api.toggleStepCompleted(id, stepId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -105,7 +103,7 @@ function Task() {
     mutationFn: ({ id, title }: { id: string; title: string }) => window.api.addStep(id, title),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -117,7 +115,7 @@ function Task() {
       window.api.updateStepTitle(id, stepId, title),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -141,7 +139,7 @@ function Task() {
       window.api.deleteStep(id, stepId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -150,7 +148,7 @@ function Task() {
     mutationFn: window.api.toggleIsToday,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -160,7 +158,7 @@ function Task() {
       window.api.updateDueDate(id, dueDate),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -186,7 +184,7 @@ function Task() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
@@ -196,31 +194,10 @@ function Task() {
       window.api.updateMemo(id, memo),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['tasks', { filter: filter }]
+        queryKey: ['tasks']
       })
     }
   })
-
-  const [memo, setMemo] = useState(query.data?.memo || '')
-  const [memoDebounceTimer, setMemoDebounceTimer] = useState<NodeJS.Timeout | null>(null)
-  const startDebounceMemoUpdate = (value: string) => {
-    if (!query.data) {
-      return
-    }
-    const id = query.data.id
-    if (memoDebounceTimer) {
-      clearTimeout(memoDebounceTimer)
-    }
-    setMemo(value)
-    setMemoDebounceTimer(
-      setTimeout(() => {
-        updateMemoMutation.mutate({ id: id, memo: value })
-      }, 500)
-    )
-  }
-  useEffect(() => {
-    setMemo(query.data?.memo || '')
-  }, [taskId])
 
   return (
     <div className={`w-80 flex flex-col h-[calc(100dvh-1.5rem)]`}>
@@ -389,7 +366,7 @@ function Task() {
                     onSubmit={(e) => {
                       e.preventDefault()
                       const formData = new FormData(e.target as HTMLFormElement)
-                      const stepTitle = formData.get('stepTitle') as string
+                      const stepTitle = (formData.get('stepTitle') as string).trim()
                       if (!query.data || stepTitle.match(/^\s*$/)) {
                         return
                       }
@@ -453,13 +430,12 @@ function Task() {
                       />
                     </li>
                   </ul>
-                  <textarea
-                    placeholder="メモを追加"
-                    className="m-1 px-4 text-sm rounded-lg min-h-60 border border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    value={memo}
-                    onChange={(e) => {
-                      startDebounceMemoUpdate(e.target.value)
-                    }}
+                  <DetailMemo
+                    memo={query.data?.memo}
+                    key={query.data?.id}
+                    onChange={(value) =>
+                      query.data && updateMemoMutation.mutate({ id: query.data.id, memo: value })
+                    }
                   />
                 </div>
               </div>

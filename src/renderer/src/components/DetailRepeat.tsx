@@ -14,7 +14,7 @@ type Props = {
   onSubmit?: (repeat: Repeat) => void
 }
 
-export function DetailRepeat({ repeat, onSubmit }: Props) {
+function DetailRepeat({ repeat, onSubmit }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   return (
@@ -165,6 +165,8 @@ export function DetailRepeat({ repeat, onSubmit }: Props) {
     </>
   )
 }
+
+export default DetailRepeat
 
 function buildRepeatFromFormData(formData: FormData): Repeat {
   const type = formData.get('repeat-type') as string
